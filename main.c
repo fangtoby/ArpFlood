@@ -266,5 +266,45 @@ int main(int argc,char *argv[])
 	{
 		printf("i=%s \n",argv[1]);
 	}
+
+	char IPdotdec[20]; //存放点分十进制IP地址
+	struct in_addr s; // IPv4地址结构体
+
+	// 输入IP地址
+	printf("Please input IP address: ");
+	scanf("%s", IPdotdec);
+	// 转换
+	if( inet_pton(AF_INET, IPdotdec, (void *)&s) < 0){
+		perror("fail to convert");
+		exit(1);
+	}
+	printf("inet_pton: 0x%x\n", s.s_addr); // 注意得到的字节序
+
+	// 反转换
+	if(inet_ntop(AF_INET, (void *)&s, IPdotdec, 16) == NULL){
+		perror("fail to convert");
+		exit(0);
+	}
+	printf("inet_ntop: %s\n", IPdotdec);
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
