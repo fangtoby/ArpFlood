@@ -266,7 +266,15 @@ int main(int argc,char *argv[])
 	{
 		printf("i=%s \n",argv[1]);
 	}
-
+	/**
+	 * in_addr IPv4地址结构体
+	 *
+	 * inet_ntop();
+	 *
+	 * inet_pton();
+	 *
+	 * ip格式转换函数的使用
+	 */
 	char IPdotdec[20]; //存放点分十进制IP地址
 	struct in_addr s; // IPv4地址结构体
 
