@@ -86,3 +86,29 @@ http://blog.chinaunix.net/uid-20698826-id-3155563.html
 	3. 决定使用的以太网接口的索引值
 	4. 构造目的地址
 	5. 发送以太网帧
+
+3> 套接字的发送 send/sendto/sendmsg系统调用
+
+	功能描述：
+	发送消息。send只可用于基于连接的套接字，send 和 write唯一的不同点是标志的存在，当标志为0时，send等同于write。sendto 和 sendmsg既可用于无连接的套接字，也可用于基于连接的套接字。除了套接字设置为非阻塞模式，调用将会阻塞直到数据被发送完。
+
+	用法： 
+	#include <sys/types.h>
+	#include <sys/socket.h>
+
+	ssize_t send(int sock, const void *buf, size_t len, int flags);
+	ssize_t sendto(int sock, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen);
+	ssize_t sendmsg(int sock, const struct msghdr *msg, int flags);
+
+	参数：  
+	sock：索引将要从其发送数据的套接字。
+	buf：指向将要发送数据的缓冲区。
+	len：以上缓冲区的长度。
+	flags：是以下零个或者多个标志的组合体，可通过or操作连在一起
+
+	MSG_DONTROUTE：不要使用网关来发送封包，只发送到直接联网的主机。这个标志主要用于诊断或者路由程序。
+	MSG_DONTWAIT：操作不会被阻塞。
+	MSG_EOR：终止一个记录。
+	MSG_MORE：调用者有更多的数据需要发送。
+	MSG_NOSIGNAL：当另一端终止连接时，请求在基于流的错误套接字上不要发送SIGPIPE信号。
+	MSG_OOB：发送out-of-band数据(需要优先处理的数据)，同时现行协议必须支持此种操作。
