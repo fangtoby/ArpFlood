@@ -36,3 +36,30 @@ OP操作选项(ARP request=01,ARP reply=02)（2个字节）
 目的以太网地址（6个字节）  
 目的IP地址（4个字节）  
 --------------------------------------------  
+
+1> libpcap 
+
+libpcap是一个网络数据包捕获函数库，功能非常强大，Linux下著名
+的tcpdump就是以它为基础的。我们可以利用它来完成自己的sniffer。
+
+linux_sockets.c
+
+cc -o linux_sockets.c -lpcap -o linux linux_sockets
+
+wget -c http://www.tcpdump.org/release/libpcap-1.5.3.tar.gz
+
+tar zxvf libpcap-1.5.3.tar.gz
+
+cd libpcap-1.5.3.tar.gz  
+
+libpcap dependent( 
+		flex: yum -y install flex
+		bison: yum -y install bison
+		yum install -y libpcap libpcap-devel
+	)
+
+./configure
+
+make && make install
+
+
