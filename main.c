@@ -253,7 +253,7 @@ int main(int argc,char *argv[])
 
 	char dstMacAddress[] = "a8:15:4d:1f:7d:68";
 
-	char srcMacAddress[] = "c8:bc:c8:92:3e:05";
+	char srcMacAddress[] = "00:0C:29:46:B3:50";
 
 	/*
 	MAC_FRAME_HEADER header;
@@ -367,6 +367,16 @@ int main(int argc,char *argv[])
 	memcpy(buf, &eth_hdr, hdr_len);
 
 	memcpy(&buf[hdr_len], &arp, sizeof(struct ether_arp));
+	//printf("sizeof buf :%d\n",(int)sizeof(buf));
+	/*
+	FILE *logfile;
+	
+	logfile=fopen("log.txt","w");
+	
+	fprintf(logfile , "sdfsdf"); 
+	
+	fclose(logfile);	
+	*/
 
 	result = sendto(fd, buf, sizeof(buf), 0, &sa, sizeof(sa));
 
