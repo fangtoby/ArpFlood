@@ -244,6 +244,36 @@ void mac_to_char(char *mac,unsigned char *str){
 		str[i] = (char) v;
 	}
 }
+
+// 填充MAC   
+void set_hw_addr (char buf[], char *str)
+{
+              int i;
+              char c, val;
+              for(i = 0; i < 6; i++)
+              {
+                      if (!(c = tolower(*str++)))
+                              perror("Invalid hardware address"),exit(1);
+                     if (isdigit(c))
+                             val = c - '0';
+                     else if (c >= 'a' && c <= 'f')
+                             val = c-'a'+10;
+                     else
+                             perror("Invalid hardware address"),exit(1);
+                     buf[i] = val << 4;
+                     if (!(c = tolower(*str++)))
+                             perror("Invalid hardware address"),exit(1);
+                     if (isdigit(c))
+                             val = c - '0';
+                     else if (c >= 'a' && c <= 'f')
+                             val = c-'a'+10;
+                     else
+                             perror("Invalid hardware address"),exit(1);
+                     buf[i] |= val;
+                     if (*str == ':')
+                             str++;
+             }
+}
 /* 主函数 */
 int main(int argc,char *argv[])
 {
