@@ -128,4 +128,38 @@ int send_arp(int sockfd, struct sockaddr_ll *peer_addr)
 	}
 	return SUCCESS;
 }
-
+//////////////////////////////////////////////////////////////////////////  
+// 函数名: recv_arp   
+// 描述 : 接收ARP回复数据报文并判断是不是对免费ARP的回复。  
+// 参数:   
+//    [in] sockfd -- 创建的socket描述符;  
+//    [in] peer_addr -- 对端的IP信息  
+// 返回值:   
+//    成功: SUCCESS, 失败: FAILURE;  
+// 说明:   
+//    若是对免费arp请求的回复则返回:SUCCESS.  
+//////////////////////////////////////////////////////////////////////////  
+int recv_arp(int sockfd, struct sockaddr_ll *peer_addr)  
+{  
+    int rtval;  
+    ARP_PACKET_OBJ frame;  
+      
+    memset(&frame, 0, sizeof(ARP_PACKET_OBJ));  
+    rtval = recvfrom(sockfd, &frame, sizeof(frame), 0,   
+        NULL, NULL);  
+    //判断是否接收到数据并且是否为回应包  
+    if (htons(ARPOP_REPLY) == frame.arp.ea_hdr.ar_op && rtval > 0)  
+    {  
+        //判断源地址是否为冲突的IP地址  
+        if (memcmp(frame.arp.arp_spa, src_ip, 4) == 0)  
+        {  
+            fprintf(stdout, "IP address is common~\n");  
+            return SUCCESS;  
+        }  
+    }  
+    if (rtval < 0)  
+    {  
+        return FAILURE;  
+    }  
+    return FAILURE;  
+}  
