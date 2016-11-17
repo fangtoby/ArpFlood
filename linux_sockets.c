@@ -17,6 +17,7 @@
 void process_packet(u_char *, const struct pcap_pkthdr *, const u_char *);
 void process_ip_packet(const u_char * , int);
 void print_ip_packet(const u_char * , int);
+void print_arp_header(const u_char * , int);
 void print_tcp_packet(const u_char *  , int );
 void print_udp_packet(const u_char * , int);
 void print_icmp_packet(const u_char * , int );
@@ -113,6 +114,7 @@ void process_packet(u_char *args, const struct pcap_pkthdr *header, const u_char
 
 		default: //Some Other Protocol like ARP etc.
 			++others;
+			print_arp_header(buffer , size);
 			break;
 	}
 	printf("TCP : %d   UDP : %d   ICMP : %d   IGMP : %d   Others : %d   Total : %d\r", tcp , udp , icmp , igmp , others , total);
@@ -127,8 +129,15 @@ void print_ethernet_header(const u_char *Buffer, int Size)
 	fprintf(logfile , "   |-Destination Address : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X \n", eth->h_dest[0] , eth->h_dest[1] , eth->h_dest[2] , eth->h_dest[3] , eth->h_dest[4] , eth->h_dest[5] );
 	fprintf(logfile , "   |-Source Address      : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X \n", eth->h_source[0] , eth->h_source[1] , eth->h_source[2] , eth->h_source[3] , eth->h_source[4] , eth->h_source[5] );
 	fprintf(logfile , "   |-Protocol            : %u \n",(unsigned short)eth->h_proto);
+
+	printf("   |-Destination Address : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X \n", eth->h_dest[0] , eth->h_dest[1] , eth->h_dest[2] , eth->h_dest[3] , eth->h_dest[4] , eth->h_dest[5] );
 }
 
+void print_arp_header(const u_char * Buffer, int Size)
+{
+	print_ethernet_header(Buffer , Size);
+
+}
 void print_ip_header(const u_char * Buffer, int Size)
 {
 	print_ethernet_header(Buffer , Size);

