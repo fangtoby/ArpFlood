@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <net/ethernet.h>
+#include <bsm/audit_domain.h>
 
 #define ETH_ALEN 6  //定义了以太网接口的MAC地址的长度为6个字节
 #define ETH_HLAN 14  //定义了以太网帧的头长度为14个字节
@@ -21,9 +22,6 @@
 #define ETH_DATA_LEN 1500  //定义了以太网帧的最大负载为1500个字节
 #define ETH_FRAME_LEN 1514  //定义了以太网正的最大长度为ETH_DATA_LEN + ETH_FCS_LEN = 1518个字节
 #define ETH_FCS_LEN 4   //定义了以太网帧的CRC值占4个字节
-
-#define PF_PACKET   17  /* Packet family.  */
-#define AF_PACKET   PF_PACKET
 
 #define ETH_P_ALL       0x0003
 #define ETH_P_LOOP      0x0060          /* Ethernet Loopback packet     */
@@ -85,6 +83,18 @@ int main(int argc,char** argv){
     int sendto_string_count;
     
     //创建套接字
+    /*
+    在socket的第一个参数使用PF_PACKET的时候，上述三种socket的类型都可以使用。但是有区别。
+    (1)使用SOCK_RAW发送的数据必须包含链路层的协议头，接受得到的数据包，包含链路层协议头。而使用SOCK_DGRAM则都不含链路层的协议头。
+    (2)SOCK_PACKET也是可以使用的，但是已经废弃，以后不保证还能支持，不推荐使用。
+    (3)在使用SOCK_RAW或SOCK_DGRAM和SOCK_PACKET时，在sendto和recvfrom中使用的地址类型不同，前两者使用sockaddr_ll类型的地址，而后者使用sockaddr类型的地址。
+    (4)如socket的第一个参数使用PF_INET，第二个参数使用SOCK_RAW，则可以得到原始的IP包。
+     
+     1.socket(AF_INET, SOCK_RAW, IPPROTO_TCP|IPPROTO_UDP|IPPROTO_ICMP)发送接收ip数据包
+     2.socket(PF_PACKET, SOCK_RAW, htons(ETH_P_IP|ETH_P_ARP|ETH_P_ALL))发送接收以太网数据帧
+     3.socket(AF_INET, SOCK_PACKET, htons(ETH_P_IP|ETH_P_ARP|ETH_P_ALL))过时了,不要用啊
+     
+     */
     sock = socket(AF_INET,SOCK_RAW,0);
     if(0>sock){
         printf("Create Error");
@@ -107,6 +117,7 @@ int main(int argc,char** argv){
     }
     
     toaddr.sll_ifindex = ifr.ifr_intval;
+    toaddr.sll_family = AF_INET;
     
     printf("interface Index:%d\n",ifr.ifr_intval);
     
@@ -145,8 +156,6 @@ int main(int argc,char** argv){
 //    inet_pton(AF_INET,"192.168.1.105",&targetIP);
 //    memcpy(arp.arp_tpa,&targetIP,4);
     memcpy((void *) arp.arp_tpa,(void *) des_ip_addr, 4);
-    
-    toaddr.sll_family = AF_INET;
     
     
     memcpy(buf, &eth, ether_header_len);
