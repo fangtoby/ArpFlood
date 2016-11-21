@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/if_ether.h>
@@ -23,9 +24,13 @@
 */
 void ip_packet_callback(char * packet_content);
 
+void arp_packet_callback(char * packet_content);
+
 void ip_tcp_packet_callback(char * packet_content);
 
 void ip_udp_packet_callback(char * packet_content);
+
+void ip_icmp_packet_callback(char * packet_content);
 
 int main(int argc, char **argv) {
    int sock, n;
@@ -74,11 +79,12 @@ int main(int argc, char **argv) {
 	 switch(ntohs(eth->h_proto))
 	 {
 		case ETH_P_IP:
-			printf("IP Packet\n");
+			//printf("IP Packet\n");
 			ip_packet_callback(buffer);
 		break;
 		case ETH_P_ARP:
-			printf("ARP Packet\n");
+			arp_packet_callback(buffer);
+			//printf("ARP Packet\n");
 		break;
 		case ETH_P_RARP:
 			printf("RARP Packet\n");
@@ -94,6 +100,7 @@ void ip_packet_callback(char * packet_content)
 	switch(iph->protocol)
 	{
 		case IPPROTO_ICMP:
+			ip_icmp_packet_callback(packet_content);
 			printf("ether ip icmp protocol\n");
 		break;
 		case IPPROTO_TCP:
@@ -129,4 +136,26 @@ void ip_udp_packet_callback(char * packet_content)
 	printf("    |-Destination Port       :%d\n",ntohs(udpst->dest));
 	printf("    |-UDP Length             :%d\n",ntohs(udpst->len));
 	printf("    |-UDP Check Sum          :%d\n",ntohs(udpst->check));
+}
+
+void ip_icmp_packet_callback(char * packet_content)
+{
+	struct icmphdr *icmpst;
+	icmpst = (struct icmphdr *)(packet_content + sizeof(struct ethhdr) + sizeof(struct iphdr));
+	printf("ICMP Header\n");
+	printf("    |-Message Type           :%d\n",(unsigned int)icmpst->type);
+	printf("    |-Type Sub Code          :%d\n",(unsigned int)icmpst->code);
+	printf("    |-Check Sum              :%d\n",ntohs(icmpst->checksum));
+}
+
+void arp_packet_callback(char * packet_content)
+{
+	struct arphdr *arpst;
+	arpst = (struct arphdr *)(packet_content + sizeof(struct ethhdr));
+	printf("ARP Header\n");
+	printf("    |-Hardware Address       :%d\n",ntohs(arpst->ar_hrd));
+	printf("    |-Protocol Address       :%d\n",ntohs(arpst->ar_pro));
+	printf("    |-Hardware Address Length:%d\n",arpst->ar_hln);
+	printf("    |-Protocol Address Length:%d\n",arpst->ar_pln);
+	printf("    |-ARP Opcode             :%d\n",ntohs(arpst->ar_op));
 }
