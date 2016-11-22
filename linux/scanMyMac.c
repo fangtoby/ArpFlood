@@ -12,6 +12,19 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <time.h>
+struct arppacket
+{
+	unsigned short int ar_hrd;
+	unsigned short int ar_pro;
+	unsigned char ar_hln;
+	unsigned char ar_pln;
+	unsigned short int ar_op;
+
+	unsigned char ar_sha[ETH_ALEN];
+	unsigned char ar_sip[4];
+	unsigned char ar_tha[ETH_ALEN];
+	unsigned char ar_tip[4];
+};
 /*
 //header.file /usr/include/linux/if_ether.h
 
@@ -56,7 +69,7 @@ int main(int argc, char **argv) {
 
      //接收到的数据帧头6字节是目的MAC地址，紧接着6字节是源MAC地址。
      eth=(struct ethhdr*)buffer;
-	 printf("Ethernet Header\n");
+	 printf("Ethernet Header\n"); 
      printf("   |-Destination Mac Address :%02x:%02x:%02x:%02x:%02x:%02x\n",eth->h_dest[0],eth->h_dest[1],eth->h_dest[2],eth->h_dest[3],eth->h_dest[4],eth->h_dest[5]);
      printf("   |-Source MAC Address      :%02x:%02x:%02x:%02x:%02x:%02x\n",eth->h_source[0],eth->h_source[1],eth->h_source[2],eth->h_source[3],eth->h_source[4],eth->h_source[5]);
 
@@ -101,14 +114,14 @@ void ip_packet_callback(char * packet_content)
 	{
 		case IPPROTO_ICMP:
 			ip_icmp_packet_callback(packet_content);
-			printf("ether ip icmp protocol\n");
+			//printf("ether ip icmp protocol\n");
 		break;
 		case IPPROTO_TCP:
-			printf("ether ip tcp protocol\n");
+			//printf("ether ip tcp protocol\n");
 			ip_tcp_packet_callback(packet_content);
 		break;
 		case IPPROTO_UDP:
-			printf("ether ip udp protocol\n");
+			//printf("ether ip udp protocol\n");
 			ip_udp_packet_callback(packet_content);
 		break;
 	}
@@ -118,24 +131,24 @@ void ip_tcp_packet_callback(char * packet_content)
 	struct tcphdr *tcpst;
 	tcpst = (struct tcphdr *)(packet_content + sizeof(struct ethhdr) + sizeof(struct iphdr));
 	printf("TCP Header\n");
-	printf("    |-Source Port            :%d\n",ntohs(tcpst->source));
-	printf("    |-Destination Port       :%d\n",ntohs(tcpst->dest));
-	printf("    |-Sequence Number        :%u\n",ntohl(tcpst->seq));
-	printf("    |-Acknowledgement Number :%u\n",ntohl(tcpst->ack_seq));
-	printf("    |-Header Length          :%d\n",ntohs(tcpst->doff) * 4);
-	printf("    |-Check Sum              :%d\n",ntohs(tcpst->check));
-	printf("    |-Window Size            :%d\n",ntohs(tcpst->window));
-	printf("    |-Urgent Pointer         :%d\n",ntohs(tcpst->urg_ptr));
+	printf("   |-Source Port            :%d\n",ntohs(tcpst->source));
+	printf("   |-Destination Port       :%d\n",ntohs(tcpst->dest));
+	printf("   |-Sequence Number        :%u\n",ntohl(tcpst->seq));
+	printf("   |-Acknowledgement Number :%u\n",ntohl(tcpst->ack_seq));
+	printf("   |-Header Length          :%d\n",ntohs(tcpst->doff) * 4);
+	printf("   |-Check Sum              :%d\n",ntohs(tcpst->check));
+	printf("   |-Window Size            :%d\n",ntohs(tcpst->window));
+	printf("   |-Urgent Pointer         :%d\n",ntohs(tcpst->urg_ptr));
 }
 void ip_udp_packet_callback(char * packet_content)
 {
 	struct udphdr *udpst;
 	udpst = (struct udphdr *)(packet_content + sizeof(struct ethhdr) + sizeof(struct iphdr));
 	printf("UDP Header\n");
-	printf("    |-Source Port            :%d\n",ntohs(udpst->source));
-	printf("    |-Destination Port       :%d\n",ntohs(udpst->dest));
-	printf("    |-UDP Length             :%d\n",ntohs(udpst->len));
-	printf("    |-UDP Check Sum          :%d\n",ntohs(udpst->check));
+	printf("   |-Source Port            :%d\n",ntohs(udpst->source));
+	printf("   |-Destination Port       :%d\n",ntohs(udpst->dest));
+	printf("   |-UDP Length             :%d\n",ntohs(udpst->len));
+	printf("   |-UDP Check Sum          :%d\n",ntohs(udpst->check));
 }
 
 void ip_icmp_packet_callback(char * packet_content)
@@ -143,28 +156,31 @@ void ip_icmp_packet_callback(char * packet_content)
 	struct icmphdr *icmpst;
 	icmpst = (struct icmphdr *)(packet_content + sizeof(struct ethhdr) + sizeof(struct iphdr));
 	printf("ICMP Header\n");
-	printf("    |-Message Type           :%d\n",(unsigned int)icmpst->type);
-	printf("    |-Type Sub Code          :%d\n",(unsigned int)icmpst->code);
-	printf("    |-Check Sum              :%d\n",ntohs(icmpst->checksum));
+	printf("   |-Message Type           :%d\n",(unsigned int)icmpst->type);
+	printf("   |-Type Sub Code          :%d\n",(unsigned int)icmpst->code);
+	printf("   |-Check Sum              :%d\n",ntohs(icmpst->checksum));
 }
 
 void arp_packet_callback(char * packet_content)
 {
-	struct arphdr *arpst;
-	arpst = (struct arphdr *)(packet_content + sizeof(struct ethhdr));
+	struct arppacket *arpst;
+	arpst = (struct arppacket *)(packet_content + sizeof(struct ethhdr));
 	printf("ARP Header\n");
-	printf("    |-Hardware Address       :%d\n",ntohs(arpst->ar_hrd));
-	printf("    |-Protocol Address       :%d\n",ntohs(arpst->ar_pro));
-	printf("    |-Hardware Address Length:%d\n",arpst->ar_hln);
-	printf("    |-Protocol Address Length:%d\n",arpst->ar_pln);
-	printf("    |-ARP Opcode             :%d\n",ntohs(arpst->ar_op));
+	printf("   |-Hardware Address       :%d\n",ntohs(arpst->ar_hrd));
+	printf("   |-Protocol Address       :%d\n",ntohs(arpst->ar_pro));
+	printf("   |-Hardware Address Length:%d\n",arpst->ar_hln);
+	printf("   |-Protocol Address Length:%d\n",arpst->ar_pln);
+	printf("   |-ARP Opcode             :%d\n",ntohs(arpst->ar_op));
 	/* ARP protocol opcodes. */  
-	//#define     ARPOP_REQUEST    1                /*ARP request                            */  
-	//#define     ARPOP_REPLY 2                /*ARP reply                        */  
-	//#define     ARPOP_RREQUEST  3                /*RARP request                         */  
-	//#define     ARPOP_RREPLY        4                /*RARP reply                     */  
-	//#define     ARPOP_InREQUEST 8                /*InARP request               */  
-	//#define     ARPOP_InREPLY       9                /*InARP reply                    */  
-	//#define     ARPOP_NAK     10              /*(ATM)ARP NAK                       */  
-	
+	//#define     ARPOP_REQUEST    1        /*ARP request*/  
+	//#define     ARPOP_REPLY      2        /*ARP reply*/  
+	//#define     ARPOP_RREQUEST   3        /*RARP request*/  
+	//#define     ARPOP_RREPLY	   4        /*RARP reply*/  
+	//#define     ARPOP_InREQUEST  8        /*InARP request*/  
+	//#define     ARPOP_InREPLY    9        /*InARP reply*/  
+	//#define     ARPOP_NAK        10		/*(ATM)ARP NAK*/  
+	printf("   |-Sender IP Address      :%s\n",inet_ntoa(*(struct in_addr *)&arpst->ar_sip));
+	printf("   |-Target IP Address      :%s\n",inet_ntoa(*(struct in_addr *)&arpst->ar_tip));
+    printf("   |-Sender  Mac Address    :%02x:%02x:%02x:%02x:%02x:%02x\n",arpst->ar_sha[0],arpst->ar_sha[1],arpst->ar_sha[2],arpst->ar_sha[3],arpst->ar_sha[4],arpst->ar_sha[5]);
+    printf("   |-Target  Mac Address    :%02x:%02x:%02x:%02x:%02x:%02x\n",arpst->ar_tha[0],arpst->ar_tha[1],arpst->ar_tha[2],arpst->ar_tha[3],arpst->ar_tha[4],arpst->ar_tha[5]);
 }
