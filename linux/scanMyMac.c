@@ -12,6 +12,7 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <time.h>
+//self defined arppacket or use ether_arp (/usr/include/netinet/if_ether.h)
 struct arppacket
 {
 	unsigned short int ar_hrd;
@@ -45,35 +46,37 @@ void ip_udp_packet_callback(char * packet_content);
 
 void ip_icmp_packet_callback(char * packet_content);
 
+//FILE *file;
+
 int main(int argc, char **argv) {
    int sock, n;
    char buffer[2048];
    struct ethhdr *eth;
    struct iphdr *iph;
-   FILE *file;
    time_t timer;
 
    if (0>(sock=socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL)))) {
      perror("socket");
      exit(1);
    }
-   file = fopen("log.txt","w");
-
+//   file = fopen("log.txt","a");
+//   if(file == NULL){
+//	   printf("log.txt file open error!\n");
+//   }
    while (1) {
+     n = recvfrom(sock,buffer,2048,0,NULL,NULL);
      printf("===========================================================\n");
 	 timer = time(NULL);
 	 printf("ctime is %s",ctime(&timer));
-     //注意：在这之前我没有调用bind函数，原因是什么呢？
-     n = recvfrom(sock,buffer,2048,0,NULL,NULL);
      printf("[%d bytes read]\n",n);
 
-     //接收到的数据帧头6字节是目的MAC地址，紧接着6字节是源MAC地址。
      eth=(struct ethhdr*)buffer;
 	 printf("Ethernet Header\n"); 
      printf("   |-Destination Mac Address :%02x:%02x:%02x:%02x:%02x:%02x\n",eth->h_dest[0],eth->h_dest[1],eth->h_dest[2],eth->h_dest[3],eth->h_dest[4],eth->h_dest[5]);
      printf("   |-Source MAC Address      :%02x:%02x:%02x:%02x:%02x:%02x\n",eth->h_source[0],eth->h_source[1],eth->h_source[2],eth->h_source[3],eth->h_source[4],eth->h_source[5]);
 
 	 printf("   |-Protocol                :%u\n",(unsigned short)eth->h_proto);
+     //接收到的数据帧头6字节是目的MAC地址，紧接着6字节是源MAC地址。
      iph=(struct iphdr*)(buffer+sizeof(struct ethhdr));
      //我们只对IPV4且没有选项字段的IPv4报文感兴趣
      if(iph->version ==4 && iph->ihl == 5){
@@ -92,18 +95,19 @@ int main(int argc, char **argv) {
 	 switch(ntohs(eth->h_proto))
 	 {
 		case ETH_P_IP:
-			//printf("IP Packet\n");
 			ip_packet_callback(buffer);
 		break;
 		case ETH_P_ARP:
 			arp_packet_callback(buffer);
-			//printf("ARP Packet\n");
 		break;
 		case ETH_P_RARP:
-			printf("RARP Packet\n");
+			arp_packet_callback(buffer);
 		break;
 	 }
+	 //fflush(file);
    }
+   //fclose(file);
+   return 0;
 }
 void ip_packet_callback(char * packet_content)
 {
@@ -114,14 +118,11 @@ void ip_packet_callback(char * packet_content)
 	{
 		case IPPROTO_ICMP:
 			ip_icmp_packet_callback(packet_content);
-			//printf("ether ip icmp protocol\n");
 		break;
 		case IPPROTO_TCP:
-			//printf("ether ip tcp protocol\n");
 			ip_tcp_packet_callback(packet_content);
 		break;
 		case IPPROTO_UDP:
-			//printf("ether ip udp protocol\n");
 			ip_udp_packet_callback(packet_content);
 		break;
 	}
@@ -165,7 +166,7 @@ void arp_packet_callback(char * packet_content)
 {
 	struct arppacket *arpst;
 	arpst = (struct arppacket *)(packet_content + sizeof(struct ethhdr));
-	printf("ARP Header\n");
+	printf("ARP/RARP Header\n");
 	printf("   |-Hardware Address       :%d\n",ntohs(arpst->ar_hrd));
 	printf("   |-Protocol Address       :%d\n",ntohs(arpst->ar_pro));
 	printf("   |-Hardware Address Length:%d\n",arpst->ar_hln);
