@@ -1,3 +1,6 @@
+/*
+ * 获取本机网卡列表
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -12,7 +15,6 @@ int main()
 	struct ifreq ifr;
 	struct ifconf ifc;
 	char buf[2048];
-	int success = 0;
 
 	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
 	if (sock == -1) {
@@ -48,4 +50,5 @@ int main()
 			return -1;
 		}
 	}
+	return 0;
 }

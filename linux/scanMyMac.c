@@ -46,6 +46,8 @@ void ip_udp_packet_callback(char * packet_content);
 
 void ip_icmp_packet_callback(char * packet_content);
 
+void print_data(const u_char * data, int size);
+
 //FILE *file;
 
 int main(int argc, char **argv) {
@@ -86,8 +88,18 @@ int main(int argc, char **argv) {
 			 printf("   |-Type Of Service   :%d\n",(unsigned int)iph->tos);
 			 printf("   |-TP Total Length   :%d Bytes(size of packet)\n",ntohs(iph->tot_len));
 			 printf("   |-Identification    :%d\n",ntohs(iph->id));
-			 printf("   |-TTL               :%d\n",(unsigned int)iph->ttl);
-			 printf("   |-Protocol          :%d\n",(unsigned int)iph->protocol);
+			 // __be16  frag_off;             
+			 // frag_off域的低13位 -- 分段偏移(Fragment offset)域指明了该分段在当前
+			 // 数据报中的什么位置上。除了一个数据报的最后一个分段以外，其他所有的
+			 // 分段(分片)必须是8字节的倍数。这是8字节是基本分段单位。iphdr->frag_off
+			 // 的高3位(1) 比特0是保留的，必须为0；(2) 比特1是“更多分片”(MF -- More 
+			 // Fragment)标志。除了最后一片外，其他每个组成数据报的片都要把该比特置1。 
+			 // (3) 比特2是“不分片”(DF -- Don't Fragment)标志,如果将这一比特置1，
+			 // IP将不对数据报进行分片,这时如果有需要进行分片的数据报到来，会丢弃此
+			 // 数据报并发送一个ICMP差错报文给起始端。  
+			 printf("   |-Frag Off          :%d\n",ntohs(iph->frag_off));
+			 printf("   |-TTL               :%d\n",(unsigned int short)iph->ttl);
+			 printf("   |-Protocol          :%d\n",(unsigned int short)iph->protocol);
 			 printf("   |-Checksum          :%d\n",ntohs(iph->check));
              printf("   |-Source IP         :%s\n",inet_ntoa(*(struct in_addr *)&iph->saddr));
              printf("   |-Destination IP    :%s\n",inet_ntoa(*(struct in_addr *)&iph->daddr));
@@ -184,4 +196,9 @@ void arp_packet_callback(char * packet_content)
 	printf("   |-Target IP Address      :%s\n",inet_ntoa(*(struct in_addr *)&arpst->ar_tip));
     printf("   |-Sender  Mac Address    :%02x:%02x:%02x:%02x:%02x:%02x\n",arpst->ar_sha[0],arpst->ar_sha[1],arpst->ar_sha[2],arpst->ar_sha[3],arpst->ar_sha[4],arpst->ar_sha[5]);
     printf("   |-Target  Mac Address    :%02x:%02x:%02x:%02x:%02x:%02x\n",arpst->ar_tha[0],arpst->ar_tha[1],arpst->ar_tha[2],arpst->ar_tha[3],arpst->ar_tha[4],arpst->ar_tha[5]);
+}
+
+void print_data(const u_char * data, int size)
+{
+	
 }
