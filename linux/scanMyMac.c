@@ -157,13 +157,13 @@ void ip_tcp_packet_callback(char * packet_content, int size)
 	printf("   |-Window Size            :%d\n",ntohs(tcpst->window));
 	printf("   |-Urgent Pointer         :%d\n",tcpst->urg_ptr);
 	
-	printf("Ethner Header\n");
+	printf("[Ethner Header]\n");
 	print_data(packet_content , sizeof(struct ethhdr));
-	printf("IP Header\n");
+	printf("[IP Header]\n");
 	print_data(packet_content + sizeof(struct ethhdr) , sizeof(struct iphdr));
-	printf("TCP Header\n");
+	printf("[TCP Header]\n");
 	print_data(packet_content + sizeof(struct ethhdr) + sizeof(struct iphdr),tcpst->doff * 4);
-	printf("Data Payload\n");
+	printf("[Data Payload]\n");
 	print_data(packet_content + header_size, size - header_size);
 }
 void ip_udp_packet_callback(char * packet_content, int size)
@@ -186,13 +186,13 @@ void ip_udp_packet_callback(char * packet_content, int size)
 	printf("   |-Destination Port       :%d\n",ntohs(udpst->dest));
 	printf("   |-UDP Length             :%d\n",ntohs(udpst->len));
 	printf("   |-UDP Check Sum          :%d\n",ntohs(udpst->check));
-	printf("Ethner Header\n");
+	printf("[Ethner Header]\n");
 	print_data(packet_content , sizeof(struct ethhdr));
-	printf("IP Header\n");
+	printf("[IP Header]\n");
 	print_data(packet_content + sizeof(struct ethhdr) , sizeof(struct iphdr));
-	printf("UDP Header\n");
+	printf("[UDP Header]\n");
 	print_data(packet_content + sizeof(struct ethhdr) + sizeof(struct iphdr),sizeof udpst);
-	printf("Data Payload\n");
+	printf("[Data Payload]\n");
 
 	print_data(packet_content + header_size, size - header_size);
 }
@@ -207,6 +207,11 @@ void ip_icmp_packet_callback(char * packet_content, int size)
 	printf("   |-Message Type           :%d\n",(unsigned int)icmpst->type);
 	printf("   |-Type Sub Code          :%d\n",(unsigned int)icmpst->code);
 	printf("   |-Check Sum              :%d\n",ntohs(icmpst->checksum));
+	printf("[Ethner Header]\n");
+	print_data(packet_content , sizeof(struct ethhdr));
+	printf("[IP Header]\n");
+	print_data(packet_content + sizeof(struct ethhdr) , sizeof(struct iphdr));
+	printf("[Data Payload]\n");
 	print_data(packet_content + header_size ,size - header_size);
 }
 
@@ -232,6 +237,12 @@ void arp_packet_callback(char * packet_content, int size)
 	printf("   |-Target IP Address      :%s\n",inet_ntoa(*(struct in_addr *)&arpst->ar_tip));
 	printf("   |-Sender  Mac Address    :%02x:%02x:%02x:%02x:%02x:%02x\n",arpst->ar_sha[0],arpst->ar_sha[1],arpst->ar_sha[2],arpst->ar_sha[3],arpst->ar_sha[4],arpst->ar_sha[5]);
 	printf("   |-Target  Mac Address    :%02x:%02x:%02x:%02x:%02x:%02x\n",arpst->ar_tha[0],arpst->ar_tha[1],arpst->ar_tha[2],arpst->ar_tha[3],arpst->ar_tha[4],arpst->ar_tha[5]);
+	printf("[Ethner Header]\n");
+	print_data(packet_content , sizeof(struct ethhdr));
+	printf("[Arp Header]\n");
+	print_data(packet_content + sizeof(struct ethhdr) , sizeof(struct arppacket));
+	printf("[Data Payload]\n");
+	print_data(packet_content + sizeof(struct ethhdr) + sizeof(struct arppacket),size - sizeof(struct ethhdr) - sizeof(struct arppacket));	
 }
 
 void print_data(const char * data, int size)
