@@ -266,7 +266,8 @@ void print_data(const char * data, int size)
 			printf("    ");
 
 		printf("%02x",(unsigned int)data[i]);
-
+		//printf("%2x",(unsigned int) data[i]);
+		//printf("%x",(unsigned int) data[i]);
 		if( i == size - 1){
 			for(j=16 - i%16;j>0;j--){
 				printf(" ");
